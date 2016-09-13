@@ -61,14 +61,30 @@ def recover(plot_acf=False):
 
 
 if __name__ == "__main__":
-    recover(plot_acf=True)
+    # recover(plot_acf=True)
 
-#     ids, periods, pmins, pmaxs, height, rvar = np.genfromtxt("periods.txt").T
+    ids, periods, pmins, pmaxs, height, rvar, localph = \
+        np.genfromtxt("periods.txt").T
+    m = (periods > 0) * (localph > .1)  # remove failed period measurements
+    truth = .5*(pmins + pmaxs)
 
-#     plt.clf()
-#     plt.scatter(.5*(pmins + pmaxs), periods, marker=".", c=np.log(rvar), s=50,
-#                 edgecolor="")
-#     plt.colorbar()
-#     plt.ylim(0, 100)
-#     plt.xlim(0, 100)
-#     plt.savefig("test_rvar")
+    truth, periods, localph = truth[m], periods[m], localph[m]
+
+    lim = .2
+
+    plt.clf()
+    plt.plot(truth, truth, "k--")
+    plt.plot(truth, truth+truth*lim, "k--")
+    plt.plot(truth, truth-truth*lim, "k--")
+    plt.scatter(truth, periods, marker=".", c=localph,
+                cmap="GnBu_r", s=50, edgecolor="")
+    plt.colorbar()
+    # plt.ylim(0, 100)
+    # plt.xlim(0, 100)
+    plt.savefig("test_lph")
+
+    # calculate success rate
+    fractional_diff = np.abs(truth - periods) / truth
+    nsuccess = len(fractional_diff[fractional_diff < lim])
+    percent = float(nsuccess) / float(len(truth)) * 100
+    print(percent)

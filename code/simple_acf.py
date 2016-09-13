@@ -22,6 +22,8 @@ def simple_acf(x, y, time_cutoff=100):
     m, b = np.linalg.solve(ATA, np.dot(AT, y))
     y -= m*x + b
 
+    rvar = np.percentile(y, 95)  # variance diagnostic of the light curve
+
     # perform acf
     acf = dan_acf(y)
 
@@ -50,6 +52,8 @@ def simple_acf(x, y, time_cutoff=100):
 
     # find all the peaks
     peaks, dips, leftdips, rightdips, bigpeaks = find_peaks(acf_smooth, lags)
+    if peaks == []:  # if there are no peaks in the acf return 0s
+        return 0, acf_smooth, lags, rvar, 0, 0, 0, 0
 
     # find the first and second peaks ()
     if len(peaks) > 1:
@@ -67,18 +71,17 @@ def simple_acf(x, y, time_cutoff=100):
     highest_peak = acf_smooth[m][0]
     period = lags[m][0]
 
-    rvar = np.percentile(y, 95)  # variance diagnostic of the light curve
-
     # find the local peak height
-    rppos = min(lags[peaks][lags[peaks] > period])
-    if len(lags[peaks][lags[peaks] < period]):
-        lppos = max(lags[peaks][lags[peaks] < period])  # if no left dip
+    if len(lags[dips][lags[dips] < period]) \
+            and len(lags[dips][lags[dips] > period]):
+        lppos = max(lags[dips][lags[dips] < period])
+        rppos = min(lags[dips][lags[dips] > period])
+        lph = acf_smooth[lags == lppos]
+        rph = acf_smooth[lags == rppos]
+        localph = (highest_peak - .5*(lph + rph))[0]  # lph = highest - mean
     else:
-        lppos = rppos
-    lph = acf_smooth[lags == lppos]
-    rph = acf_smooth[lags == rppos]
-    localph = highest_peak - .5*(lph + rph)  # lph = highest - mean each side
-    print(lppos, period, rppos, lph, rph, highest_peak, localph)
+        lppos, rppos, lph, rph, localph = 0, 0, 0, 0, 0
+        print(lppos, period, rppos, lph, rph, highest_peak, localph)
 
     return period, acf_smooth, lags, rvar, highest_peak, localph, lppos, rppos
 
@@ -89,6 +92,8 @@ def find_peaks(acf_smooth, lags, t=.2):
     peaks = np.array([i for i in range(1, len(lags)-1)
                      if acf_smooth[i-1] < acf_smooth[i] and
                      acf_smooth[i+1] < acf_smooth[i]])
+    if len(peaks) == 0:
+        return [], 0, 0, 0, 0
 
     # find all the dips
     dips = np.array([i for i in range(1, len(lags)-1)
