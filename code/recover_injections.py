@@ -61,7 +61,7 @@ def recover(plot_acf=False):
 
 
 if __name__ == "__main__":
-    recover(plot_acf=False)
+    recover(plot_acf=True)
 
 #     ids, periods, pmins, pmaxs, height, rvar = np.genfromtxt("periods.txt").T
 

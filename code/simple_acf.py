@@ -49,9 +49,7 @@ def simple_acf(x, y, time_cutoff=100):
     acf_smooth, lags = acf_smooth[m], lags[m]
 
     # find all the peaks
-    peaks = np.array([i for i in range(1, len(lags)-1)
-                     if acf_smooth[i-1] < acf_smooth[i] and
-                     acf_smooth[i+1] < acf_smooth[i]])
+    peaks, dips, leftdips, rightdips, bigpeaks = find_peaks(acf_smooth, lags)
 
     # find the first and second peaks ()
     if len(peaks) > 1:
@@ -72,14 +70,52 @@ def simple_acf(x, y, time_cutoff=100):
     rvar = np.percentile(y, 95)  # variance diagnostic of the light curve
 
     # find the local peak height
-    lppos = max(lags[peaks][lags[peaks] < period])
     rppos = min(lags[peaks][lags[peaks] > period])
+    if len(lags[peaks][lags[peaks] < period]):
+        lppos = max(lags[peaks][lags[peaks] < period])  # if no left dip
+    else:
+        lppos = rppos
     lph = acf_smooth[lags == lppos]
     rph = acf_smooth[lags == rppos]
     localph = highest_peak - .5*(lph + rph)  # lph = highest - mean each side
     print(lppos, period, rppos, lph, rph, highest_peak, localph)
 
     return period, acf_smooth, lags, rvar, highest_peak, localph, lppos, rppos
+
+
+def find_peaks(acf_smooth, lags, t=.2):
+
+    # find all the peaks
+    peaks = np.array([i for i in range(1, len(lags)-1)
+                     if acf_smooth[i-1] < acf_smooth[i] and
+                     acf_smooth[i+1] < acf_smooth[i]])
+
+    # find all the dips
+    dips = np.array([i for i in range(1, len(lags)-1)
+                     if acf_smooth[i-1] > acf_smooth[i] and
+                     acf_smooth[i+1] > acf_smooth[i]])
+
+    # find all dips immediately left and right of the peaks
+    leftdips = np.array([lags[dips][lags[dips] < lags[peak]][-1] for peak in
+                         peaks])
+    if lags[dips[-1]] > lags[peaks[-1]]:
+        rightdips = np.array([lags[dips][lags[dips] > lags[peak]][0] for peak
+                              in peaks])
+    else:  # if there is no right hand dip:
+        rightdips = [lags[dips][lags[dips] > lags[peaks[i]]][0]
+                     for i in range(len(peaks)-1)]
+        rightdips.append(lags[-1])
+        rightdips = np.array(rightdips)
+
+    # find the peak heights
+    leftdip_heights = acf_smooth[lags == leftdips]
+    rightdip_heights = acf_smooth[lags == rightdips]
+    peak_heights = acf_smooth[peaks]
+    meandiffs = .5*(np.abs(peak_heights - leftdip_heights) +
+                    np.abs(peak_heights - rightdip_heights))
+    bigpeaks = peaks[meandiffs > t]
+
+    return peaks, dips, leftdips, rightdips, bigpeaks
 
 
 def find_nearest(array, value):
