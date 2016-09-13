@@ -1,9 +1,20 @@
+# Compute an acf and diagnostics
+
 import numpy as np
-import matplotlib.pyplot as plt
-import emcee
 import glob
 
-def simple_acf(x, y, plot=False, PLOT_PATH="data/simulations/plots"):
+
+def simple_acf(x, y, time_cutoff=100):
+    """
+    Calculate an acf and find the peak positions.
+    :param x:
+        The time array.
+    :param y:
+        The flux array.
+    :param time_cutoff: (optional)
+        The maximum period you want to search for.
+
+    """
 
     # fit and subtract straight line
     AT = np.vstack((x, np.ones_like(x)))
@@ -18,34 +29,24 @@ def simple_acf(x, y, plot=False, PLOT_PATH="data/simulations/plots"):
     gap_days = 0.02043365
     lags = np.arange(len(acf))*gap_days
 
+    # Reflect the acf about the x=0 axis before smoothing
     N = len(acf)
     double_acf, double_lags = [np.zeros((2*N)) for i in range(2)]
     double_acf[:N], double_lags[:N] = acf[::-1], -lags[::-1]
     double_acf[N:], double_lags[N:] = acf, lags
     acf, lags = double_acf, double_lags
 
-    # smooth with Gaussian kernel convolution
+    # smooth with Gaussian kernel convolution, then halve
     Gaussian = lambda x, sig: 1./(2*np.pi*sig**.5) * np.exp(-0.5*(x**2)/
                                                             (sig**2))
     conv_func = Gaussian(np.arange(-28, 28, 1.), 9.)
     acf_smooth = np.convolve(acf, conv_func, mode='same')
     acf_smooth, lags = acf_smooth[N:], lags[N:]
 
-    # ditch the first point
+    # ditch the first point and everything after the time cutoff
     acf_smooth, lags = acf_smooth[1:], lags[1:]
-
-    peaks, dips, leftdips, rightdips, bigpeaks = find_peaks(acf_smooth, lags)
-
-    # find the first and second peaks
-    if len(peaks) > 1:
-        if acf_smooth[peaks[0]] > acf_smooth[peaks[1]]:
-            period = lags[peaks[0]]
-        else:
-            period = lags[peaks[1]]
-    elif len(peaks) == 1:
-        period = lags[peaks][0]
-    elif not len(peaks):
-        period = np.nan
+    m = lags < time_cutoff
+    acf_smooth, lags = acf_smooth[m], lags[m]
 
     # find the highest peak
     m = acf_smooth == max(acf_smooth[peaks])
@@ -54,43 +55,15 @@ def simple_acf(x, y, plot=False, PLOT_PATH="data/simulations/plots"):
 
     rvar = np.percentile(y, 95)
 
-    return period, acf_smooth, lags, rvar, peaks, dips, leftdips, rightdips, \
-        bigpeaks, highest_peak
+    # find the local peak height
+    lppos = max(lags[peaks][lags[peaks] < period])
+    rppos = min(lags[peaks][lags[peaks] > period])
+    lph = acf_smooth[lags == lppos]
+    rph = acf_smooth[lags == rppos]
+    localph = highest_peak - .5*(lph + rph)  # lph = highest - mean each side
+    print(lppos, period, rppos, lph, rph, highest_peak, localph)
 
-
-def find_peaks(acf_smooth, lags, t=.2):
-
-    # find all the peaks
-    peaks = np.array([i for i in range(1, len(lags)-1)
-                     if acf_smooth[i-1] < acf_smooth[i] and
-                     acf_smooth[i+1] < acf_smooth[i]])
-
-    # find all the dips
-    dips = np.array([i for i in range(1, len(lags)-1)
-                     if acf_smooth[i-1] > acf_smooth[i] and
-                     acf_smooth[i+1] > acf_smooth[i]])
-
-    # find all dips immediately left and right of the peaks
-    leftdips = np.array([lags[dips][lags[dips] < lags[peak]][-1] for peak in
-                         peaks])
-    if lags[dips[-1]] > lags[peaks[-1]]:
-        rightdips = np.array([lags[dips][lags[dips] > lags[peak]][0] for peak
-                              in peaks])
-    else:  # if there is no right hand dip:
-        rightdips = [lags[dips][lags[dips] > lags[peaks[i]]][0]
-                     for i in range(len(peaks)-1)]
-        rightdips.append(lags[-1])
-        rightdips = np.array(rightdips)
-
-    # find the peak heights
-    leftdip_heights = acf_smooth[lags == leftdips]
-    rightdip_heights = acf_smooth[lags == rightdips]
-    peak_heights = acf_smooth[peaks]
-    meandiffs = .5*(np.abs(peak_heights - leftdip_heights) +
-                    np.abs(peak_heights - rightdip_heights))
-    bigpeaks = peaks[meandiffs > t]
-
-    return peaks, dips, leftdips, rightdips, bigpeaks
+    return period, acf_smooth, lags, rvar, highest_peak, lppos, rppos
 
 
 def find_nearest(array, value):
