@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import emcee
 import glob
 
-def simple_acf(x, y):
+def simple_acf(x, y, plot=False, PLOT_PATH="data/simulations/plots"):
 
     # fit and subtract straight line
     AT = np.vstack((x, np.ones_like(x)))
@@ -51,12 +51,11 @@ def simple_acf(x, y):
     m = acf_smooth == max(acf_smooth[peaks])
     highest_peak = acf_smooth[m][0]
     period = lags[m][0]
-    print(highest_peak, period)
 
     rvar = np.percentile(y, 95)
 
     return period, acf_smooth, lags, rvar, peaks, dips, leftdips, rightdips, \
-        bigpeaks
+        bigpeaks, highest_peak
 
 
 def find_peaks(acf_smooth, lags, t=.2):
