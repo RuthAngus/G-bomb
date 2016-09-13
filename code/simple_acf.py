@@ -48,12 +48,28 @@ def simple_acf(x, y, time_cutoff=100):
     m = lags < time_cutoff
     acf_smooth, lags = acf_smooth[m], lags[m]
 
+    # find all the peaks
+    peaks = np.array([i for i in range(1, len(lags)-1)
+                     if acf_smooth[i-1] < acf_smooth[i] and
+                     acf_smooth[i+1] < acf_smooth[i]])
+
+    # find the first and second peaks ()
+    if len(peaks) > 1:
+        if acf_smooth[peaks[0]] > acf_smooth[peaks[1]]:
+            period = lags[peaks[0]]
+        else:
+            period = lags[peaks[1]]
+    elif len(peaks) == 1:
+        period = lags[peaks][0]
+    elif not len(peaks):
+        period = np.nan
+
     # find the highest peak
     m = acf_smooth == max(acf_smooth[peaks])
     highest_peak = acf_smooth[m][0]
     period = lags[m][0]
 
-    rvar = np.percentile(y, 95)
+    rvar = np.percentile(y, 95)  # variance diagnostic of the light curve
 
     # find the local peak height
     lppos = max(lags[peaks][lags[peaks] < period])
@@ -63,7 +79,7 @@ def simple_acf(x, y, time_cutoff=100):
     localph = highest_peak - .5*(lph + rph)  # lph = highest - mean each side
     print(lppos, period, rppos, lph, rph, highest_peak, localph)
 
-    return period, acf_smooth, lags, rvar, highest_peak, lppos, rppos
+    return period, acf_smooth, lags, rvar, highest_peak, localph, lppos, rppos
 
 
 def find_nearest(array, value):
