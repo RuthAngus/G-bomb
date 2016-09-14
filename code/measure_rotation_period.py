@@ -1,4 +1,5 @@
 # recover rotation periods from kepler light curves
+# This code should be run on Glamdring.
 
 import numpy as np
 import matplotlib.pyplot as plt

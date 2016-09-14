@@ -34,7 +34,7 @@ kid, periods = np.genfromtxt("kplr_periods.txt").T
 matched, tgas_inds, rot_inds = match(tgas["kepid"], kid)
 
 periods = np.array(rot["Prot"])[rot_inds]
-teff = np.array(tgas["Teff"])[tgas_inds]
+teff = np.array(tgas["teff"])[tgas_inds]
 logg = np.array(tgas["logg"])[tgas_inds]
 pmra = np.array(tgas["pmra"])[tgas_inds]
 pmdec = np.array(tgas["pmdec"])[tgas_inds]

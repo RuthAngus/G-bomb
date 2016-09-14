@@ -1,14 +1,12 @@
-# Crossmatching catalogues
+# Crossmatching catalogues: produce ruth_matched.csv
 
 import pandas as pd
-import os
-# from astero import astero
-# a = astero()
 from cross_match import convert_to_cartesian
 from scipy.spatial import cKDTree as KDTree
 import numpy as np
 
-def match(id1, id2):
+
+def matching(id1, id2):
     matched = []
     for id in id1:
         m = id2 == id
@@ -16,14 +14,16 @@ def match(id1, id2):
             matched.append(id)
     return matched
 
+
 def load_kepler():
     return pd.read_csv("data/matched.csv")
+
 
 def load_tgas():
     return pd.read_csv("../../gaia/Tgas.csv")
 
 if __name__ == "__main__":
-    tol = np.radians(.1 / 3600)  # arcsec -> deg -> rad
+    tol = np.radians(1. / 3600)  # arcsec -> deg -> rad
 
     print("Loading the Tycho-2 catalog...")
     tycho2 = load_tgas()
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     kepler_tree = KDTree(kepler_xyz)
 
     # Cross match.
-    print("Cross matching tress...")
+    print("Cross matching trees...")
     match = kepler_tree.query_ball_tree(tycho2_tree, np.sqrt(2-2*np.cos(tol)))
     match_flag = np.zeros(len(kepler), dtype=bool)
     match_id = np.zeros(len(kepler), dtype=np.uint64)
@@ -60,13 +60,13 @@ if __name__ == "__main__":
     print(len(match_id))
     TGAS_PATH = "/export/bbq2/angusr/gaia/Tgas.csv"
     kepler["tycho2_match_id"] = \
-            np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
+        np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
     kepler["pmra"] = \
-            np.array(pd.read_csv(TGAS_PATH)["pmra"].iloc[match_id])
+        np.array(pd.read_csv(TGAS_PATH)["pmra"].iloc[match_id])
     kepler["pmdec"] = \
-            np.array(pd.read_csv(TGAS_PATH)["pmdec"].iloc[match_id])
+        np.array(pd.read_csv(TGAS_PATH)["pmdec"].iloc[match_id])
     kepler["parallax"] = \
-            np.array(pd.read_csv(TGAS_PATH)["parallax"].iloc[match_id])
+        np.array(pd.read_csv(TGAS_PATH)["parallax"].iloc[match_id])
     kepler["tycho2_match_dist_deg"] = np.degrees(distances)
     kepler["tycho2_match_ra"] = np.array(tycho2.ra.iloc[match_id])
     kepler["tycho2_match_dec"] = np.array(tycho2.dec.iloc[match_id])
