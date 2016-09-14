@@ -65,6 +65,8 @@ if __name__ == "__main__":
             np.array(pd.read_csv(TGAS_PATH)["pmra"].iloc[match_id])
     kepler["pmdec"] = \
             np.array(pd.read_csv(TGAS_PATH)["pmdec"].iloc[match_id])
+    kepler["parallax"] = \
+            np.array(pd.read_csv(TGAS_PATH)["parallax"].iloc[match_id])
     kepler["tycho2_match_dist_deg"] = np.degrees(distances)
     kepler["tycho2_match_ra"] = np.array(tycho2.ra.iloc[match_id])
     kepler["tycho2_match_dec"] = np.array(tycho2.dec.iloc[match_id])
