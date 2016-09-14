@@ -8,12 +8,8 @@ from simple_acf import simple_acf
 from kepler_data import load_kepler_data
 import glob
 
-SIM_DIR = "data/simulations"
-DATA_DIR = "data"
-PLOT_PATH = "data/simulations/plots"
 
-
-def measure_prot(ids, DATA_DIR, PLOT_DIR, plot_acf=False):
+def measure_prot(ids, DATA_DIR, PLOT_PATH, plot_acf=False):
     """
     Measure the rotation periods of a set of light curves.
     :param plot: (optional)
@@ -29,9 +25,12 @@ def measure_prot(ids, DATA_DIR, PLOT_DIR, plot_acf=False):
     for i, id in enumerate(ids):
         print(i, "of", len(ids))
         str_id = str(int(id)).zfill(9)
-        fnames = glob.glob(os.path.join(DATA_DIR,
-                           "{0}/kplr*{0}*llc.fits".format(str_id)))
+        fnames = []
+        for i in range(18):
+            fnames.append(glob.glob(os.path.join(DATA_DIR,
+                          "DR25_Q{0}/kplr*{1}*llc.fits".format(i, str_id))))
         print(fnames)
+        assert 0
         x, y, yerr = load_kepler_data(fnames)
         period, acf, lags, rvar, height, localph, lppos, rppos = \
             simple_acf(x, y)
@@ -57,10 +56,7 @@ def measure_prot(ids, DATA_DIR, PLOT_DIR, plot_acf=False):
 
         # append results to file
         with open("kplr_periods.txt", "a") as f:
-            f.write("{0} {1} {2} {3} {4} {5} {6} \n".format(id, period,
-                                                            pmin[i], pmax[i],
-                                                            height, rvar,
-                                                            localph))
+            f.write("{0} {1} \n".format(id, period))
 
 
 def sigma_clipping(x, y, nsigmas, iterations=10):
@@ -74,11 +70,17 @@ def sigma_clipping(x, y, nsigmas, iterations=10):
 
 
 def fit_line(x, y):
-    AT = np.vstack((true_periods, np.ones_like(true_periods)))
+    AT = np.vstack((x, np.ones_like(x)))
     ATA = np.dot(AT, AT.T)
-    return np.linalg.solve(ATA, np.dot(AT, periods))
+    return np.linalg.solve(ATA, np.dot(AT, y))
 
 
 if __name__ == "__main__":
 
-    kepler_tgas = pd.read_csv("data/ruth_matched.txt")
+    kepler_tgas = pd.read_csv("ruth_matched.csv")
+    ids = np.array(kepler_tgas["kepid"])
+
+    DATA_DIR = "/kepler/kepler/FITS/"
+    PLOT_PATH = "plots"
+
+    measure_prot(ids, DATA_DIR, PLOT_PATH)
