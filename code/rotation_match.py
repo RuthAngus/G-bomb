@@ -27,11 +27,15 @@ tgas = pd.read_csv("ruth_matched.csv")
 # load Amy's catalogue
 rot = pd.read_csv("data/Table_1_Periodic.txt")
 
-matched, tgas_inds, rot_inds = match(tgas["kepid"], rot["KID"])
+# load my catalogue
+kid, periods = np.genfromtxt("kplr_periods.txt").T
+
+# matched, tgas_inds, rot_inds = match(tgas["kepid"], rot["KID"])
+matched, tgas_inds, rot_inds = match(tgas["kepid"], kid)
 
 periods = np.array(rot["Prot"])[rot_inds]
-teff = np.array(rot["Teff"])[rot_inds]
-logg = np.array(rot["logg"])[rot_inds]
+teff = np.array(tgas["Teff"])[tgas_inds]
+logg = np.array(tgas["logg"])[tgas_inds]
 pmra = np.array(tgas["pmra"])[tgas_inds]
 pmdec = np.array(tgas["pmdec"])[tgas_inds]
 parallax = np.array(tgas["parallax"])[tgas_inds]
