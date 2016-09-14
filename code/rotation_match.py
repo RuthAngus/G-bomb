@@ -53,10 +53,10 @@ plt.ylabel("period (days)")
 plt.savefig("period_pmdec")
 
 plt.clf()
-plt.scatter(1./parallax, periods, s=50, c=teff, cmap="GnBu")
+plt.scatter(1./parallax, periods, s=50, c=teff, cmap="GnBu", label="Teff")
 plt.colorbar()
 plt.xlabel("distance (Kpc)")
-plt.ylabel("period (days)")
+plt.ylabel("Rotation period (days)")
 plt.xlim(0, 2)
 plt.savefig("period_parallax")
 
