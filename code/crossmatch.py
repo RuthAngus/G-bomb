@@ -60,7 +60,8 @@ if __name__ == "__main__":
     print(len(match_id))
     TGAS_PATH = "/export/bbq2/angusr/gaia/Tgas.csv"
     kepler["tycho2_match_id"] = \
-        np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
+            np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
+    print(len(np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])))
     kepler["pmra"] = \
         np.array(pd.read_csv(TGAS_PATH)["pmra"].iloc[match_id])
     kepler["pmdec"] = \
@@ -70,5 +71,7 @@ if __name__ == "__main__":
     kepler["tycho2_match_dist_deg"] = np.degrees(distances)
     kepler["tycho2_match_ra"] = np.array(tycho2.ra.iloc[match_id])
     kepler["tycho2_match_dec"] = np.array(tycho2.dec.iloc[match_id])
+    print(np.shape(kepler))
     kepler_matched = kepler.iloc[match_flag]
+    print(np.shape(kepler_matched))
     kepler_matched.to_csv("ruth_matched.csv", index=False)
