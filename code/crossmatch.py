@@ -23,7 +23,7 @@ def load_tgas():
     return pd.read_csv("../../gaia/Tgas.csv")
 
 if __name__ == "__main__":
-    tol = np.radians(1. / 3600)  # arcsec -> deg -> rad
+    tol = np.radians(.5 / 3600)  # arcsec -> deg -> rad
 
     print("Loading the Tycho-2 catalog...")
     tycho2 = load_tgas()
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print(len(match_id))
     TGAS_PATH = "/export/bbq2/angusr/gaia/Tgas.csv"
     kepler["tycho2_match_id"] = \
-            np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
+        np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])
     print(len(np.array(pd.read_csv(TGAS_PATH)["tycho2_id"].iloc[match_id])))
     kepler["pmra"] = \
         np.array(pd.read_csv(TGAS_PATH)["pmra"].iloc[match_id])
@@ -68,6 +68,8 @@ if __name__ == "__main__":
         np.array(pd.read_csv(TGAS_PATH)["pmdec"].iloc[match_id])
     kepler["parallax"] = \
         np.array(pd.read_csv(TGAS_PATH)["parallax"].iloc[match_id])
+    kepler["parallax_error"] = \
+        np.array(pd.read_csv(TGAS_PATH)["parallax_error"].iloc[match_id])
     kepler["tycho2_match_dist_deg"] = np.degrees(distances)
     kepler["tycho2_match_ra"] = np.array(tycho2.ra.iloc[match_id])
     kepler["tycho2_match_dec"] = np.array(tycho2.dec.iloc[match_id])
